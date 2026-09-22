@@ -97,6 +97,19 @@ async def run() -> None:
         @retry(wait=wait_exponential(multiplier=1, min=2, max=10), stop=stop_after_attempt(5))
         def _init_db_with_retry(url):
             init_engine(url)
+            # Ensure pgvector exists
+            from sqlalchemy import text
+            from app.database.session import _SessionLocal
+            with _SessionLocal() as session:
+                session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+                session.commit()
+                
+            # Auto-run alembic migrations
+            import alembic.config
+            import alembic.command
+            alembic_cfg = alembic.config.Config("alembic.ini")
+            alembic.command.upgrade(alembic_cfg, "head")
+            logger.info("Database migrations applied successfully.")
             
         logger.info("DATABASE_URL is set — using Postgres (Phase 2) path.")
         _init_db_with_retry(settings.database_url)
