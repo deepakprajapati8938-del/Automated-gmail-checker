@@ -13,7 +13,7 @@ beautifulsoup4==4.12.3
 tenacity==9.0.0
 
 # --- AI provider SDKs (only the ones you configure need working API keys) ---
-openai==1.51.0
+openai>=1.52.0
 google-genai==1.3.0
 groq==0.11.0
 
