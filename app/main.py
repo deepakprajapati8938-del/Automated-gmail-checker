@@ -57,7 +57,24 @@ async def _gmail_poll_loop(app, processor: EmailProcessor, pending: list[Process
         await asyncio.sleep(settings.gmail_poll_interval_seconds)
 
 
+import os
+
+async def _healthcheck_handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    """A dummy HTTP handler to pass Render's Web Service health checks."""
+    try:
+        response = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\n\r\nOK"
+        writer.write(response)
+        await writer.drain()
+    except Exception:
+        pass
+    finally:
+        writer.close()
+
 async def run() -> None:
+    port = int(os.environ.get("PORT", "8080"))
+    server = await asyncio.start_server(_healthcheck_handler, "0.0.0.0", port)
+    logger.info("Started dummy healthcheck server on port %s to keep Render happy", port)
+
     ai_provider = get_provider()
 
     try:
@@ -172,6 +189,8 @@ async def run() -> None:
     finally:
         logger.info("Shutting down...")
         poll_task.cancel()
+        server.close()
+        await server.wait_closed()
         await telegram_app.updater.stop()
         await telegram_app.stop()
         await telegram_app.shutdown()
