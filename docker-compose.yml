@@ -1,0 +1,26 @@
+# Phase 1 only needs the `app` service (no DATABASE_URL required).
+# The `postgres` service is included now, disabled by default, so Phase 2 can
+# `docker compose up` without any compose-file changes — just set
+# DATABASE_URL in .env once Phase 2 lands.
+services:
+  app:
+    build: .
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  # --- Phase 2+ ---
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: email_agent
+      POSTGRES_PASSWORD: change_me
+      POSTGRES_DB: email_agent
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

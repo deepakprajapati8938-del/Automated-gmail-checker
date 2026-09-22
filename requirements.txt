@@ -1,0 +1,25 @@
+# --- Phase 1: Telegram + Gmail MVP ---
+# python-telegram-bot 21.6 pins httpx~=0.27, which conflicts with openai/
+# google-genai (they need httpx>=0.28). 22.3+ relaxes that to httpx>=0.27,<0.29,
+# which is compatible with everything else below — use 22.3+, not 21.x.
+python-telegram-bot==22.3
+google-api-python-client==2.149.0
+google-auth==2.35.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+pydantic==2.9.2
+python-dotenv==1.0.1
+beautifulsoup4==4.12.3
+tenacity==9.0.0
+
+# --- AI provider SDKs (only the ones you configure need working API keys) ---
+openai==1.51.0
+google-genai==1.3.0
+groq==0.11.0
+
+# --- Phase 2+ (uncomment when starting Phase 2) ---
+sqlalchemy==2.0.35
+alembic==1.13.3
+psycopg[binary]==3.2.3
+pgvector==0.3.5
+apscheduler==3.10.4
