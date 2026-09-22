@@ -55,6 +55,8 @@ class Settings:
     gmail_token_path: Path
     gmail_state_path: Path
     gmail_poll_interval_seconds: int
+    gmail_client_secret_json: str
+    gmail_token_json: str
 
     # AI provider
     ai_provider: str
@@ -132,6 +134,8 @@ def load_settings() -> Settings:
         gmail_token_path=Path(_optional("GMAIL_TOKEN_PATH", "./data/gmail_token.json")),
         gmail_state_path=Path(_optional("GMAIL_STATE_PATH", "./data/gmail_state.json")),
         gmail_poll_interval_seconds=int(_optional("GMAIL_POLL_INTERVAL_SECONDS", "60")),
+        gmail_client_secret_json=_optional("GMAIL_CLIENT_SECRET_JSON"),
+        gmail_token_json=_optional("GMAIL_TOKEN_JSON"),
         ai_provider=ai_provider,
         ai_model=_optional("AI_MODEL", "gemini-1.5-flash"),
         openai_api_key=_optional("OPENAI_API_KEY"),
@@ -162,6 +166,24 @@ def load_settings() -> Settings:
 
     settings.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
     settings.gmail_token_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # If JSON is provided via environment variables (e.g. on Render/Railway), write it to disk
+    import base64
+    if settings.gmail_client_secret_json:
+        try:
+            # Try parsing as base64 first, fallback to raw string
+            decoded = base64.b64decode(settings.gmail_client_secret_json).decode("utf-8")
+        except Exception:
+            decoded = settings.gmail_client_secret_json
+        settings.gmail_client_secret_path.write_text(decoded, encoding="utf-8")
+
+    if settings.gmail_token_json:
+        try:
+            decoded = base64.b64decode(settings.gmail_token_json).decode("utf-8")
+        except Exception:
+            decoded = settings.gmail_token_json
+        settings.gmail_token_path.write_text(decoded, encoding="utf-8")
+
     return settings
 
 
