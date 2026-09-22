@@ -139,6 +139,7 @@ async def run() -> None:
             settings.telegram_bot_token,
             session_factory=session_factory,
             user_id=user_id,
+            gmail_client=gmail,
         )
     else:
         # --- Phase 1: SQLite fallback ---

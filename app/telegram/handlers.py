@@ -216,7 +216,13 @@ async def free_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             context_text = memory.get_context(session, user_id)
 
             ai_provider = get_provider()
-            agent = EmailAgent(ai_provider=ai_provider, session=session, user_id=user_id)
+            gmail_client = context.bot_data.get("gmail_client")
+            agent = EmailAgent(
+                ai_provider=ai_provider,
+                session=session,
+                user_id=user_id,
+                gmail_client=gmail_client,
+            )
             answer = agent.answer(user_message, context_text)
 
             # Append source citations (formatted in Python — agent never formats these)

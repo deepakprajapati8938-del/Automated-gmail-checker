@@ -166,6 +166,40 @@ def get_email_summary(session: Session, user_id: uuid.UUID, message_id: str) -> 
         "reason": a.reason if a else None,
     }
 
+def search_live_gmail(session: Session, user_id: uuid.UUID, query: str, limit: int = 5, gmail_client=None) -> list[dict]:
+    """Search your live Gmail inbox directly using standard Gmail search syntax (e.g., 'is:unread', 'from:boss@example.com').
+    Use this when looking for unread emails or historical emails not in the local database.
+    """
+    if not gmail_client:
+        return [{"error": "Live Gmail search is not available because the Gmail client is not configured."}]
+    
+    try:
+        message_ids = gmail_client.search_messages(query, limit=limit)
+    except Exception as e:
+        return [{"error": f"Failed to search Gmail: {e}"}]
+        
+    if not message_ids:
+        return []
+        
+    from app.email.parser import parse_email
+    results = []
+    for mid in message_ids:
+        try:
+            raw_msg = gmail_client.get_message(mid)
+            parsed = parse_email(raw_msg)
+            results.append({
+                "message_id": parsed.message_id,
+                "thread_id": parsed.thread_id,
+                "subject": parsed.subject,
+                "sender": parsed.sender,
+                "received_at": parsed.received_at.isoformat() if parsed.received_at else None,
+                "snippet": parsed.snippet,
+            })
+        except Exception:
+            pass  # skip messages that fail to parse
+            
+    return results
+
 
 # ---------------------------------------------------------------------------
 # Tool dispatch registry — the ONLY tools the agent may call.
@@ -186,4 +220,5 @@ TOOL_REGISTRY: dict[str, object] = {
     "get_important_emails": get_important_emails,
     "get_recent_emails": get_recent_emails,
     "get_email_summary": get_email_summary,
+    "search_live_gmail": search_live_gmail,
 }

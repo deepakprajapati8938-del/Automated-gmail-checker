@@ -87,6 +87,24 @@ class GmailClient:
             .execute()
         )
 
+    @retry(
+        stop=stop_after_attempt(4),
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        retry=retry_if_exception_type(HttpError),
+    )
+    def search_messages(self, query: str, limit: int = 10) -> list[str]:
+        """Search Gmail directly using standard Gmail query syntax (e.g. 'is:unread').
+        Returns a list of message IDs.
+        """
+        response = (
+            self._service.users()
+            .messages()
+            .list(userId="me", q=query, maxResults=limit)
+            .execute()
+        )
+        messages = response.get("messages", [])
+        return [msg["id"] for msg in messages]
+
     def poll_new_message_ids(self) -> Iterator[str]:
         """
         Yields new Gmail message IDs since the last poll. On first run, just

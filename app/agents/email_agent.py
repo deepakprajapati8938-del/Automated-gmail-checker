@@ -28,10 +28,11 @@ class EmailAgent:
 
     MAX_TOOL_HOPS = 4  # bounds worst-case cost/latency per question (spec §5, TELEGRAM_AGENT.md #5)
 
-    def __init__(self, ai_provider: AIProvider, session: Session, user_id: uuid.UUID) -> None:
+    def __init__(self, ai_provider: AIProvider, session: Session, user_id: uuid.UUID, gmail_client=None) -> None:
         self._ai_provider = ai_provider
         self._session = session
         self._user_id = user_id
+        self._gmail_client = gmail_client
 
     def answer(self, user_message: str, conversation_context: str = "") -> AgentAnswer:
         """Run the tool-calling loop and return a final answer.
@@ -94,7 +95,12 @@ class EmailAgent:
             return f"Error: unknown tool '{tool_name}'. Valid tools: {sorted(TOOL_REGISTRY)}"
 
         try:
-            return fn(self._session, self._user_id, **arguments)  # type: ignore[call-arg]
+            import inspect
+            sig = inspect.signature(fn)
+            kwargs = dict(arguments)
+            if "gmail_client" in sig.parameters:
+                kwargs["gmail_client"] = self._gmail_client
+            return fn(self._session, self._user_id, **kwargs)
         except TypeError as exc:
             # Bad arguments from LLM
             logger.warning("Tool %r bad arguments %r: %s", tool_name, arguments, exc)

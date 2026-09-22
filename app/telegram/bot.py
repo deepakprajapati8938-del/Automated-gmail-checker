@@ -37,6 +37,7 @@ def build_application(
     store=None,
     session_factory=None,
     user_id: Optional[uuid.UUID] = None,
+    gmail_client=None,
 ) -> Application:
     app = Application.builder().token(bot_token).build()
 
@@ -46,6 +47,7 @@ def build_application(
     app.bot_data["uses_database"] = session_factory is not None
     app.bot_data["session_factory"] = session_factory
     app.bot_data["user_id"] = user_id
+    app.bot_data["gmail_client"] = gmail_client
 
     app.add_handler(CommandHandler("start", handlers.start_cmd))
     app.add_handler(CommandHandler("help", handlers.help_cmd))
